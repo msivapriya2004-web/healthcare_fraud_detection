@@ -5,11 +5,10 @@ WORKDIR /code
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Copy all files (including the trained_model.joblib generated in CI)
 COPY . .
-
-# Training the model during build to ensure the file exists
-RUN python model/train.py
 
 EXPOSE 8000
 
+# Start the API directly
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
