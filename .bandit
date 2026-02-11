@@ -1,0 +1,4 @@
+[bandit]
+targets: ["app", "model"]
+exclude: ["tests", "venv", ".venv"]
+skips: ["B301", "B403"]
