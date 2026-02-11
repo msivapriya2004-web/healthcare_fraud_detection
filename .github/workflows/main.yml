@@ -32,6 +32,7 @@ jobs:
       - name: Step 3 - Unit Testing + Coverage
         run: |
           pytest --cov
+          python model/train.py
 
   build-and-push-docker:
     needs: quality-and-tests
