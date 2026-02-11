@@ -2,42 +2,65 @@ import pytest
 from fastapi.testclient import TestClient
 from app.main import app
 import os
+import pandas as pd
 from model.train import train_model
 
 client = TestClient(app)
 
-@pytest.fixture(scope="module", autouse=True)
-def ensure_model_exists():
-    """Ensures the model is trained before running API tests."""
-    if not os.path.exists('model/trained_model.joblib'):
-        # This creates the dummy data needed by train_model
-        os.makedirs('data', exist_ok=True)
-        import pandas as pd
-        df = pd.DataFrame({
-            'Provider': ['P1', 'P2'],
-            'InscClaimAmtReimbursed': [100, 200],
-            'DeductibleAmtPaid': [10, 20],
-            'PotentialFraud': ['Yes', 'No'],
-            'Beneficiary_Age': [30, 40]
-        })
-        df.to_csv('data/Train-1542865627584.csv', index=False)
-        df.to_csv('data/Train_Inpatientdata-1542865627584.csv', index=False)
-        df.to_csv('data/Train_Outpatientdata-1542865627584.csv', index=False)
-        df.to_csv('data/Train_Beneficiarydata-1542865627584.csv', index=False)
-        
-        train_model() # [cite: 45, 100]
+@pytest.fixture(scope="session", autouse=True)
+def prepare_environment():
+    """Sets up dummy data and trains the model once for the whole session."""
+    os.makedirs('data', exist_ok=True)
+    
+    # We create unique providers for each specific file to prevent 
+    # Pandas from adding _x or _y suffixes during the merge.
+    inpatient_df = pd.DataFrame({
+        'Provider': ['PRV101', 'PRV102'],
+        'InscClaimAmtReimbursed': [1000, 2000],
+        'DeductibleAmtPaid': [100, 200],
+        'Beneficiary_Age': [65, 70]
+    })
+    
+    # Using the same columns but different data to ensure a clean join
+    outpatient_df = pd.DataFrame({
+        'Provider': ['PRV103', 'PRV104'],
+        'InscClaimAmtReimbursed': [500, 100],
+        'DeductibleAmtPaid': [50, 0],
+        'Beneficiary_Age': [45, 50]
+    })
+    
+    # Crucial: This fraud label file MUST have all the Providers mentioned above
+    # and must have both 'Yes' and 'No' for the model to work.
+    fraud_df = pd.DataFrame({
+        'Provider': ['PRV101', 'PRV102', 'PRV103', 'PRV104'],
+        'PotentialFraud': ['Yes', 'No', 'Yes', 'No']
+    })
+
+    # Save files with the exact names train.py expects
+    fraud_df.to_csv('data/Train-1542865627584.csv', index=False)
+    inpatient_df.to_csv('data/Train_Inpatientdata-1542865627584.csv', index=False)
+    outpatient_df.to_csv('data/Train_Outpatientdata-1542865627584.csv', index=False)
+    # Beneficiary data is also required by your train script
+    inpatient_df.to_csv('data/Train_Beneficiarydata-1542865627584.csv', index=False)
+
+    # Train the model so trained_model.joblib is ready for the API
+    train_model()
 
 def test_health():
-    response = client.get("/health") # [cite: 89]
+    """Verify the health endpoint is reachable."""
+    response = client.get("/health")
     assert response.status_code == 200
+    assert response.json() == {"status": "up and running"}
 
 def test_predict_success():
+    """Verify the prediction endpoint works with the trained model."""
     payload = {
         "InscClaimAmtReimbursed": 100.0,
         "DeductibleAmtPaid": 50.0,
         "IsInpatient": 1,
     }
-    response = client.post("/predict", json=payload) # [cite: 86, 90]
-    # This will now be 200 because the model file exists
-    assert response.status_code == 200 
+    response = client.post("/predict", json=payload)
+    # If the model trained successfully, this will be 200
+    assert response.status_code == 200
     assert "is_fraud" in response.json()
+    assert "probability" in response.json()
