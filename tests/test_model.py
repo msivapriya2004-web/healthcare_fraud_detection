@@ -1,7 +1,7 @@
 import os
 import pandas as pd
 import pytest
-import joblib
+#import joblib
 from model.train import train_model
 from model.predict import make_prediction
 from app.schemas import ClaimInput
