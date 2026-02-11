@@ -24,14 +24,14 @@ jobs:
           pip install -r requirements.txt
 
       - name: Step 1 - PEP8 Formatting Check (Ruff)
-        [cite_start]run: ruff check . [cite: 106, 139]
+        run: ruff check .
 
       - name: Step 2 - Bandit Security Scan
-        [cite_start]run: bandit -r app model --skip B301,B403 [cite: 110, 112]
+        run: bandit -r app model --skip B301,B403
 
       - name: Step 3 - Unit Testing + Coverage
         run: |
-          pytest --cov=app --cov=model --cov-fail-under=80 [cite: 114-120]
+          pytest --cov=app --cov=model --cov-fail-under=80
 
   build-and-push-docker:
     needs: quality-and-tests
@@ -47,13 +47,13 @@ jobs:
       - name: Login to Docker Hub
         uses: docker/login-action@v2
         with:
-          [cite_start]username: ${{ secrets.DOCKERHUB_USERNAME }} [cite: 124]
-          [cite_start]password: ${{ secrets.DOCKERHUB_TOKEN }} [cite: 124]
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Step 4 - Docker Build + Push
         uses: docker/build-push-action@v4
         with:
           context: .
           push: true
-          # Replace <your-dockerhub-username> with your real username
-          [cite_start]tags: ${{ secrets.DOCKERHUB_USERNAME }}/healthcare-fraud:latest [cite: 121-125]
+          # This uses your secret username and tags the image as healthcare-fraud
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/healthcare-fraud:latest
