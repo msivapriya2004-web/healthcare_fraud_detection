@@ -10,7 +10,7 @@ env/
 
 # Data and Models
 data/
-!model/trained_model.joblib
+#model/trained_model.joblib
 
 # IDEs
 .vscode/
