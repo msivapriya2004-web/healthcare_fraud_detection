@@ -31,7 +31,7 @@ def setup_dummy_data():
         'PotentialFraud': ['Yes', 'No', 'Yes', 'No']
     })
 
-    # Save files exactly as train.py expects [cite: 33-35]
+    # Save files exactly as train.py expects
     inpatient_df.to_csv('data/Train_Inpatientdata-1542865627584.csv', index=False)
     outpatient_df.to_csv('data/Train_Outpatientdata-1542865627584.csv', index=False)
     fraud_df.to_csv('data/Train-1542865627584.csv', index=False)
@@ -55,5 +55,5 @@ def test_prediction_logic():
     )
     is_fraud, prob = make_prediction(sample_input)
     
-    assert is_fraud in [0, 1] [cite: 39]
-    assert 0.0 <= prob <= 1.0 [cite: 59]
+    assert is_fraud in [0, 1]
+    assert 0.0 <= prob <= 1.0 
